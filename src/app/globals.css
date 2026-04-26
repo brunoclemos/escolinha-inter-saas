@@ -1,0 +1,178 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: #FAFAF8;
+    --bg-elev: #FFFFFF;
+    --bg-muted: #F4F4F2;
+    --fg: #0F0F0F;
+    --fg-muted: #6B6B66;
+    --fg-subtle: #9A9A95;
+    --border: #E5E5E5;
+    --border-strong: #C9C9C5;
+    --brand: #C8102E;
+    --brand-dark: #9A0C23;
+    --brand-soft: #FFEDEE;
+    --brand-fg: #7A0F13;
+    --ok: #1B5A37;
+    --warn: #7A4D0A;
+    --err: #9A1024;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  * {
+    border-color: var(--border);
+  }
+
+  .mono {
+    font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  /* Card */
+  .ui-card {
+    @apply bg-white border border-inter-line rounded-lg shadow-soft;
+  }
+  .ui-card-head {
+    @apply flex items-center justify-between px-5 py-4 border-b border-inter-line;
+  }
+  .ui-card-body {
+    @apply p-5;
+  }
+
+  /* Buttons */
+  .ui-btn {
+    @apply inline-flex items-center justify-center gap-2 h-9 px-3.5 rounded-md
+           bg-white border border-inter-line text-sm font-medium text-inter-graphite
+           hover:bg-inter-bg active:bg-inter-line/40 transition-colors
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .ui-btn-primary {
+    @apply bg-inter-red text-white border-inter-red
+           hover:bg-inter-red-dark active:bg-inter-red-dark;
+  }
+  .ui-btn-ghost {
+    @apply bg-transparent border-transparent hover:bg-inter-bg;
+  }
+  .ui-btn-sm {
+    @apply h-8 px-3 text-xs;
+  }
+
+  /* Badges */
+  .ui-badge {
+    @apply inline-flex items-center gap-1.5 px-2 py-0.5 rounded
+           bg-inter-bg text-xs font-medium text-inter-mute border border-inter-line;
+  }
+  .ui-badge-brand {
+    @apply bg-inter-red-soft text-inter-red border-inter-red/20;
+  }
+  .ui-badge-ok {
+    background: #E7F3EC;
+    color: var(--ok);
+    border-color: rgba(27, 90, 55, 0.18);
+  }
+  .ui-badge-warn {
+    background: #FBF0DC;
+    color: var(--warn);
+    border-color: rgba(122, 77, 10, 0.18);
+  }
+
+  /* Stats */
+  .ui-stat {
+    @apply ui-card p-4;
+  }
+  .ui-stat-label {
+    @apply text-[11px] uppercase tracking-wider text-inter-mute font-medium;
+  }
+  .ui-stat-value {
+    @apply mt-1 text-2xl font-semibold text-inter-black;
+  }
+  .ui-stat-unit {
+    @apply text-base font-normal text-inter-mute ml-0.5;
+  }
+  .ui-stat-delta {
+    @apply mt-1 text-[11px] text-inter-mute font-mono;
+  }
+
+  /* Section title */
+  .ui-section-title {
+    @apply text-[11px] uppercase tracking-wider text-inter-mute font-semibold mt-6 mb-3;
+  }
+
+  /* Input */
+  .ui-input {
+    @apply flex items-center gap-2 h-9 px-3 rounded-md bg-white border border-inter-line
+           text-sm text-inter-graphite focus-within:border-inter-red focus-within:ring-1
+           focus-within:ring-inter-red/20;
+  }
+  .ui-input input,
+  .ui-input select {
+    @apply flex-1 bg-transparent outline-none text-sm w-full;
+  }
+
+  /* Tabs */
+  .ui-tabs {
+    @apply flex gap-0.5 border-b border-inter-line overflow-x-auto -mx-1 px-1 mb-5;
+  }
+  .ui-tab {
+    @apply shrink-0 inline-flex items-center gap-1.5 px-3 h-10 text-sm font-medium text-inter-mute
+           border-b-2 border-transparent hover:text-inter-graphite transition-colors;
+  }
+  .ui-tab.active {
+    @apply text-inter-red border-inter-red;
+  }
+
+  /* Avatar */
+  .ui-avatar {
+    @apply inline-flex items-center justify-center rounded-full
+           bg-inter-red-soft text-inter-red font-semibold text-sm shrink-0
+           h-9 w-9 border border-inter-red/15;
+  }
+  .ui-avatar-xl {
+    @apply h-20 w-20 text-xl;
+  }
+
+  /* KV */
+  .ui-kv {
+    @apply grid grid-cols-[140px_1fr] gap-y-2 gap-x-4 text-sm;
+  }
+  .ui-kv-key {
+    @apply text-inter-mute text-xs uppercase tracking-wider self-center;
+  }
+  .ui-kv-val {
+    @apply text-inter-graphite font-medium;
+  }
+
+  /* Progress bar */
+  .ui-bar {
+    @apply h-1.5 rounded-full bg-inter-line overflow-hidden;
+  }
+  .ui-bar > i {
+    @apply block h-full bg-inter-red rounded-full;
+  }
+}
+
+/* Print */
+@media print {
+  body {
+    background: #fff;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-page {
+    page-break-after: always;
+  }
+}
