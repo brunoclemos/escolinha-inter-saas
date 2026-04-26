@@ -10,12 +10,10 @@ import {
   ClipboardList,
   TrendingUp,
   FileText,
-  LogOut,
   Menu,
   X,
 } from "lucide-react";
 import clsx from "clsx";
-import { logout } from "@/app/login/actions";
 
 const NAV = [
   { href: "/", label: "Visão geral", icon: Home },
@@ -192,20 +190,11 @@ function SidebarContent({
           )}
           <div className="min-w-0 flex-1">
             <div className="text-xs font-medium truncate">
-              {userName || "—"}
+              Acesso público
             </div>
-            <div className="text-[10px] text-inter-mute">Responsável</div>
+            <div className="text-[10px] text-inter-mute">prototipo aberto</div>
           </div>
         </div>
-        <form action={logout}>
-          <button
-            type="submit"
-            className="mt-2 w-full inline-flex items-center justify-center gap-2 h-9 px-3 rounded-md text-xs font-medium text-inter-mute hover:bg-inter-bg hover:text-inter-graphite transition-colors"
-          >
-            <LogOut size={14} />
-            Sair
-          </button>
-        </form>
       </div>
     </>
   );

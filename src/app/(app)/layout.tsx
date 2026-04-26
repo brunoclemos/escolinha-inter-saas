@@ -1,17 +1,12 @@
-import { auth } from "@/auth";
 import { Shell } from "@/components/Shell";
-import { redirect } from "next/navigation";
 
-export default async function AppLayout({
+export default function AppLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
-
   return (
-    <Shell userName={session.user.name} userImage={session.user.image}>
+    <Shell userName="Visitante" userImage={null}>
       {children}
     </Shell>
   );
