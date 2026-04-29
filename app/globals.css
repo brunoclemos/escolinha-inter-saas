@@ -1,0 +1,115 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Onze — Tema padrão Inter (cliente-zero: rede de franquias do Sport Club Internacional).
+ * Quando virar white-label genérico, estes valores ficam em --brand-* dinamicamente
+ * por tenant via <html style> setado no middleware/layout.
+ */
+
+@layer base {
+  :root {
+    /* Brand (Inter) */
+    --brand: 357 78% 46%;          /* #C8102E */
+    --brand-soft: 356 100% 97%;    /* #FFEDEE */
+    --brand-fg: 0 0% 100%;
+    --brand-text: 357 78% 26%;     /* #7A0F13 */
+
+    /* Surface */
+    --background: 60 9% 98%;       /* #fafaf9 */
+    --foreground: 60 4% 5%;        /* #0f0f0e */
+    --card: 0 0% 100%;
+    --card-foreground: 60 4% 5%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 60 4% 5%;
+
+    /* Components mapped to brand */
+    --primary: 357 78% 46%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 60 5% 96%;
+    --secondary-foreground: 60 4% 11%;
+    --muted: 60 5% 96%;
+    --muted-foreground: 60 4% 45%;
+    --accent: 60 5% 96%;
+    --accent-foreground: 60 4% 11%;
+    --destructive: 357 78% 46%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 60 5% 90%;
+    --input: 60 5% 90%;
+    --ring: 357 78% 46%;
+
+    /* Status */
+    --ok: 146 50% 36%;             /* #2E8B57 */
+    --warn: 38 88% 36%;            /* #B2700B */
+    --err: 9 71% 44%;              /* #C2321C */
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --brand: 357 70% 55%;
+    --brand-soft: 357 30% 15%;
+    --brand-fg: 0 0% 100%;
+    --brand-text: 357 80% 85%;
+
+    --background: 60 4% 5%;
+    --foreground: 60 9% 98%;
+    --card: 60 4% 9%;
+    --card-foreground: 60 9% 98%;
+    --popover: 60 4% 9%;
+    --popover-foreground: 60 9% 98%;
+
+    --primary: 357 70% 55%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 60 4% 15%;
+    --secondary-foreground: 60 9% 98%;
+    --muted: 60 4% 15%;
+    --muted-foreground: 60 5% 65%;
+    --accent: 60 4% 15%;
+    --accent-foreground: 60 9% 98%;
+    --destructive: 357 70% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 60 4% 17%;
+    --input: 60 4% 17%;
+    --ring: 357 70% 55%;
+
+    --ok: 146 45% 55%;
+    --warn: 38 70% 60%;
+    --err: 9 65% 60%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
+  }
+
+  ::selection {
+    background: hsl(var(--brand) / 0.2);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 3px;
+  }
+}

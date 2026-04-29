@@ -1,95 +1,114 @@
-# Escolinha do Inter — Sistema de Análise de Atletas
+# Onze
 
-Plataforma de acompanhamento técnico, físico, tático e psicossocial para uma escolinha credenciada do **Sport Club Internacional** em Rio Grande/RS. Este repositório contém o **prototipo navegável** com todas as 17 telas mapeadas no brief, pré-cadastrado com o atleta **Felipe De David Fonseca** (matrícula 171273) para validação com o cliente.
+> A plataforma de quem forma atletas.
 
-## Acesso
-
-🔗 https://escolinha-inter-saas.vercel.app/
-
-Tela de login no início (público — basta clicar). Aceita "Entrar com Google" ou "Acesso visitante".
-
-## Telas implementadas
-
-**Operação:**
-1. Visão geral (dashboard)
-2. Atletas — lista + perfil completo (8 abas: visão geral · avaliações · vídeos · saúde & lesões · presenças · responsáveis · documentos)
-3. Cadastro de atleta (5 etapas)
-4. Avaliação de campo (modo offline · cronômetro)
-5. Antropometria (com cálculo PHV — Mirwald)
-6. Evolução (gráficos + percentil interno)
-7. Turmas
-8. Treinos (calendário)
-9. Avaliações (catálogo + histórico)
-10. Vídeos (upload + tagging)
-
-**Saídas:**
-11. Relatório trimestral pais (preview PDF + envio WhatsApp)
-12. Dossiê técnico para o Internacional
-13. Relatórios gerenciais
-
-**Sistema:**
-14. LGPD (consentimentos + exportação/exclusão)
-15. Usuários (RBAC)
-16. Trilha de auditoria
+SaaS multi-tenant white-label para gestão e análise de jogadores de escolinhas de futebol. Cliente-zero: rede de franquias da Escola do Sport Club Internacional.
 
 ## Stack
 
-Tecnologia minimalista, sem build:
-- HTML5 + React 18 (UMD via unpkg)
-- JSX compilado in-browser via Babel Standalone
-- CSS puro com design tokens (paleta Internacional)
-- DM Sans (sem-serif) + JetBrains Mono
-- LocalStorage para persistência da sessão e foto
-
-Sem backend. Dados seed em `mvp_base.jsx`. Para produção, ver brief original (`uploads/brief-ferramenta-analise-jogadores.md`) — proposta é Next.js 15 + Postgres + Auth.js.
-
-## Rodar localmente
-
-Não precisa instalar nada. Basta servir os arquivos estáticos:
-
-```bash
-npx serve .
-# ou
-python3 -m http.server 8000
-```
-
-Abra http://localhost:3000 (ou :8000).
+- **Next.js 16** (App Router, Turbopack) + **TypeScript** + **Tailwind v3** + **shadcn/ui**
+- **Drizzle ORM** + **Postgres** (Supabase)
+- **Cloudflare R2** (mídia, PDFs)
+- **Bunny / R2 + ffmpeg-wasm** (vídeo)
+- **Resend** (e-mail) + **Evolution API** (WhatsApp)
+- **Inngest** (jobs em background)
+- Hospedagem: Vercel + Supabase + Fly.io (workers)
 
 ## Estrutura
 
 ```
-.
-├── index.html              # entry point (login + app)
-├── mvp.css                 # design system + responsivo
-├── mvp_base.jsx            # ÚNICA fonte de dados do Felipe
-├── mvp_shell.jsx           # Sidebar + Topbar + PageHome
-├── mvp_athletes.jsx        # lista, perfil (8 abas), cadastro 5 etapas
-├── mvp_tests.jsx           # avaliação campo, antropometria, evolução
-├── mvp_reports.jsx         # relatório pais, dossiê Inter
-├── mvp_system.jsx          # turmas, treinos, vídeos, LGPD, usuários, auditoria, gerenciais
-├── assets/                 # logos
-├── uploads/                # brief original do cliente
-└── vercel.json             # config deploy estático
+onze/
+├── app/
+│   ├── (app)/              # área autenticada (sidebar + topbar)
+│   │   ├── dashboard/      # início
+│   │   └── atletas/        # CRUD atletas
+│   ├── (auth)/             # área pública (login, signup)
+│   │   └── login/
+│   ├── globals.css         # tema Onze (paleta Inter como default)
+│   └── layout.tsx
+├── components/
+│   ├── app-shell/          # sidebar + topbar (replica protótipo)
+│   ├── ui/                 # shadcn/ui
+│   └── onze-mark.tsx       # marca "11"
+├── lib/
+│   ├── db/                 # Drizzle schema, client, seed
+│   ├── tenant.ts           # resolver multi-tenant
+│   └── utils.ts            # helpers (idade, categoria, etc)
+├── proxy.ts                # multi-tenant routing (Next 16 proxy)
+├── drizzle.config.ts
+└── legacy/                 # protótipo HTML/JSX original (referência visual)
 ```
 
-## Para mudar dados do Felipe
+## Setup local
 
-Editar `mvp_base.jsx` linhas 58–110 (objeto `ATHLETES[0]`).
+```bash
+# 1. Instalar deps
+npm install
 
-## Roadmap (produto real)
+# 2. Copiar env e preencher
+cp .env.local.example .env.local
+# Edite .env.local com:
+#   - DATABASE_URL (Supabase ou Postgres local)
+#   - NEXT_PUBLIC_SUPABASE_URL / ANON_KEY (depois)
 
-- Multi-atleta + RBAC (coordenador / professor / responsável)
-- Banco Postgres + Auth.js (Google OAuth) + Stack Auth
-- Modo offline real para professor lançar avaliação no campo
-- Upload e tagging de vídeo (Mux ou Cloudflare Stream)
-- Dossiê para Inter com QR code + link expirável
-- Dashboard gamificado para o atleta (sub-13+)
+# 3. Rodar dev
+npm run dev
+```
 
-## LGPD
+Abre em http://localhost:3000 (redireciona para /login).
 
-Os dados do Felipe presentes no código são **reais** (fornecidos pelo cliente). Em produção:
-- Termo de consentimento dos responsáveis arquivado
-- Dados de saúde criptografados em repouso
-- Fotos em bucket privado com URL assinada
-- Trilha de auditoria de quem acessou cada perfil
-- 2FA para admin/coordenadores
+## Database
+
+```bash
+# Gerar migration a partir do schema
+npm run db:generate
+
+# Aplicar no banco
+npm run db:migrate
+
+# Studio (GUI do Drizzle)
+npm run db:studio
+```
+
+Schema base inclui: `tenants`, `users`, `athletes`, `guardians`, `categories`, `audit_log`, com RLS planejado por `tenant_id`.
+
+## Multi-tenancy
+
+- **Estratégia:** Row-Level Security (Postgres) com `tenant_id` em toda tabela
+- **Roteamento:**
+  - `escola-inter.onzehq.com` → tenant `escola-inter` (subdomínio)
+  - `app.escolainter.com.br` → custom domain (resolvido contra `tenants.custom_domain`)
+  - `localhost:3000` → tenant default `escola-inter` (env `NEXT_PUBLIC_DEFAULT_TENANT`)
+- **Theming:** CSS variables `--brand`, `--brand-soft`, `--brand-text` populadas por tenant via JSONB em `tenants.theme`. Default = paleta Inter (vermelho `#C8102E`).
+
+## Status (Fase 0)
+
+- [x] Estrutura Next.js 16 + TS + Tailwind + shadcn/ui
+- [x] Tema Inter (CSS vars + dark mode)
+- [x] Schema Drizzle base (8 tabelas)
+- [x] Sidebar + topbar (replica do protótipo)
+- [x] Páginas: `/login`, `/dashboard`, `/atletas` (mockadas)
+- [x] Proxy multi-tenant (resolve slug a partir do host)
+- [ ] Auth Supabase (Fase 1)
+- [ ] CRUD real ligado ao DB (Fase 1)
+- [ ] Avaliações + PDF + WhatsApp (Fase 1-2)
+
+## Roadmap
+
+Veja `~/brief-ferramenta-analise-jogadores.md` (brief completo, fora do repo) e o documento de plano consolidado.
+
+| Fase | Escopo | Prazo |
+|---|---|---|
+| **0** | Foundation (este commit) | semana 1-2 |
+| **1** | MVP fechado 50 fundadores: cadastros, avaliações, PDF, e-mail | semana 3-6 |
+| **2** | Portal pais + WhatsApp + vídeo | semana 7-10 |
+| **3** | Videoanálise, dossiê clube, gamificação | semana 11-14 |
+| **4** | White-label completo + billing Stripe/Asaas | semana 15-16 |
+
+## Convenções
+
+- Nunca usar `#C8102E` ou outras cores Inter hardcoded em código de produção. Sempre `hsl(var(--brand))` ou classe `bg-brand`.
+- Toda tabela com dado de tenant tem coluna `tenant_id` obrigatória.
+- Toda chave estrangeira para `tenants.id` usa `onDelete: "cascade"`.
+- Sem fontes serifadas. Sans-serif (DM Sans) + monospace (JetBrains Mono).
+- Toda string para o usuário em pt-BR.
