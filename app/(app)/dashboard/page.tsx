@@ -15,11 +15,17 @@ import {
   Plus,
 } from "lucide-react";
 import Link from "next/link";
+import { getCurrentTenant } from "@/lib/queries/tenant";
+import { countAthletes } from "@/lib/queries/athletes";
 
-const stats = [
+export default async function DashboardPage() {
+  const tenant = await getCurrentTenant();
+  const athletesCount = await countAthletes(tenant.id);
+
+  const stats = [
   {
     label: "Atletas ativos",
-    value: "5",
+    value: String(athletesCount),
     delta: "+0 esta semana",
     icon: Users,
     color: "text-brand",
@@ -68,14 +74,13 @@ const upcoming = [
   },
 ];
 
-export default function DashboardPage() {
   return (
     <div className="mx-auto max-w-6xl px-6 py-6">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Início</h1>
           <p className="text-sm text-muted-foreground">
-            Visão geral da Escolinha Sport Club Internacional.
+            Visão geral da {tenant.name}.
           </p>
         </div>
         <Button asChild>

@@ -1,20 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { resolveTenantFromHost } from "@/lib/tenant";
+import { updateSession } from "@/lib/supabase/proxy";
 
 /**
- * Middleware multi-tenant.
+ * Proxy multi-tenant + Supabase session refresh.
  *
- * Resolve o tenant a partir do host:
- *   - escola-inter.onzehq.com → slug "escola-inter"
- *   - app.escola-inter.com.br → custom domain "app.escola-inter.com.br"
- *   - localhost:3000           → tenant default em dev (env NEXT_PUBLIC_DEFAULT_TENANT)
- *
- * Injeta x-onze-tenant-slug e x-onze-tenant-host em headers para os layouts/server
- * components consumirem via headers().
+ * 1. Resolve o tenant a partir do host (subdomínio ou custom domain)
+ * 2. Refresca o token Supabase se necessário (cookies)
+ * 3. Injeta x-onze-tenant-* em headers para server components consumirem
  */
 export async function proxy(req: NextRequest) {
   const url = req.nextUrl;
-  const host = req.headers.get("host") ?? "";
 
   if (
     url.pathname.startsWith("/_next") ||
@@ -26,15 +22,22 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // 1. Refresh Supabase session (handles cookies)
+  const response = await updateSession(req);
+
+  // 2. Resolve tenant from host
+  const host = req.headers.get("host") ?? "";
   const tenant = resolveTenantFromHost(host);
 
-  const res = NextResponse.next();
-  res.headers.set("x-onze-tenant-slug", tenant.slug);
-  res.headers.set("x-onze-tenant-host", host);
-  res.headers.set("x-onze-tenant-source", tenant.source);
-  return res;
+  response.headers.set("x-onze-tenant-slug", tenant.slug);
+  response.headers.set("x-onze-tenant-host", host);
+  response.headers.set("x-onze-tenant-source", tenant.source);
+
+  return response;
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };

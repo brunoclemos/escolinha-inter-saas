@@ -5,7 +5,9 @@ export default {
   out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.DATABASE_URL ?? "",
+    // Drizzle Kit precisa de session state (não funciona com transaction pooler 6543).
+    // Usa DATABASE_URL_DIRECT (session pooler 5432) com fallback pro DATABASE_URL.
+    url: process.env.DATABASE_URL_DIRECT ?? process.env.DATABASE_URL ?? "",
   },
   verbose: true,
   strict: true,
