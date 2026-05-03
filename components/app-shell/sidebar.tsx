@@ -6,7 +6,29 @@ import { OnzeMark } from "@/components/onze-mark";
 import { NAV } from "./nav-config";
 import { cn } from "@/lib/utils";
 
-export function Sidebar({ className }: { className?: string }) {
+export type SidebarTenantInfo = {
+  name: string;
+  plan: string;
+  athleteCount: number;
+};
+
+const PLAN_LABEL: Record<string, string> = {
+  trial: "Trial",
+  starter: "Starter",
+  pro: "Pro",
+  premium: "Premium",
+  franchise: "Franquia",
+};
+
+export function Sidebar({
+  className,
+  tenant,
+  athleteCount,
+}: {
+  className?: string;
+  tenant: SidebarTenantInfo;
+  athleteCount: number;
+}) {
   const pathname = usePathname();
 
   return (
@@ -32,7 +54,13 @@ export function Sidebar({ className }: { className?: string }) {
               {group.items.map((item) => {
                 const Icon = item.icon;
                 const isActive =
-                  pathname === item.href || pathname.startsWith(item.href + "/");
+                  pathname === item.href ||
+                  pathname.startsWith(item.href + "/");
+                const dynamicBadge =
+                  item.href === "/atletas" && athleteCount > 0
+                    ? athleteCount
+                    : undefined;
+                const badge = dynamicBadge ?? item.badge;
                 return (
                   <li key={item.href}>
                     <Link
@@ -51,7 +79,7 @@ export function Sidebar({ className }: { className?: string }) {
                         )}
                       />
                       <span className="flex-1 truncate">{item.label}</span>
-                      {item.badge !== undefined && (
+                      {badge !== undefined && (
                         <span
                           className={cn(
                             "ml-auto rounded px-1.5 py-0.5 text-[10px] font-semibold",
@@ -60,7 +88,7 @@ export function Sidebar({ className }: { className?: string }) {
                               : "bg-muted text-muted-foreground"
                           )}
                         >
-                          {item.badge}
+                          {badge}
                         </span>
                       )}
                     </Link>
@@ -73,8 +101,14 @@ export function Sidebar({ className }: { className?: string }) {
       </nav>
 
       <div className="border-t p-3 text-[11px] text-muted-foreground">
-        <p className="font-medium text-foreground/80">Escolinha Inter</p>
-        <p>Plano Pro · 5 atletas</p>
+        <p className="truncate font-medium text-foreground/80">
+          {tenant.name}
+        </p>
+        <p>
+          Plano {PLAN_LABEL[tenant.plan] ?? tenant.plan} ·{" "}
+          {tenant.athleteCount}{" "}
+          {tenant.athleteCount === 1 ? "atleta" : "atletas"}
+        </p>
       </div>
     </aside>
   );

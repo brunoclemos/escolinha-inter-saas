@@ -14,6 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { ageFromDob, formatDate, initials } from "@/lib/utils";
 import { getCurrentTenant } from "@/lib/queries/tenant";
 import { getAthleteById } from "@/lib/queries/athletes";
+import { AddGuardianDialog } from "./add-guardian-dialog";
 
 export const dynamic = "force-dynamic";
 
@@ -203,15 +204,7 @@ export default async function AthletePage({
                 </div>
               ))
             )}
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full"
-              disabled
-              title="Em breve"
-            >
-              Adicionar responsável
-            </Button>
+            <AddGuardianDialog athleteId={athlete.id} />
           </CardContent>
         </Card>
       </div>

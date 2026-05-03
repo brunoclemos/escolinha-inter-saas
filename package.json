@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "description": "Onze - Plataforma SaaS para escolinhas de futebol. A plataforma de quem forma atletas.",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",

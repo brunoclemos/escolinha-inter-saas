@@ -1,4 +1,4 @@
-import { Sidebar } from "./sidebar";
+import { Sidebar, type SidebarTenantInfo } from "./sidebar";
 import { Topbar } from "./topbar";
 
 export type AppShellUser = {
@@ -10,13 +10,19 @@ export type AppShellUser = {
 export function AppShell({
   children,
   user,
+  tenant,
 }: {
   children: React.ReactNode;
   user: AppShellUser;
+  tenant: SidebarTenantInfo;
 }) {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      <Sidebar className="hidden md:flex" />
+      <Sidebar
+        className="hidden md:flex"
+        tenant={tenant}
+        athleteCount={tenant.athleteCount}
+      />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Topbar user={user} />
         <main className="flex-1 overflow-y-auto scrollbar-thin">

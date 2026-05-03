@@ -31,7 +31,7 @@ export const NAV: NavGroup[] = [
     title: "Operação",
     items: [
       { href: "/dashboard", label: "Início", icon: LayoutDashboard },
-      { href: "/atletas", label: "Atletas", icon: Users, badge: 5 },
+      { href: "/atletas", label: "Atletas", icon: Users },
       { href: "/turmas", label: "Turmas", icon: Shield },
       { href: "/treinos", label: "Treinos", icon: Calendar },
       { href: "/avaliacoes", label: "Avaliações", icon: ClipboardCheck },
