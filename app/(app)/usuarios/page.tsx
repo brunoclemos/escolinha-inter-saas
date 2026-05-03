@@ -1,12 +1,12 @@
-import { Plus, UserCog, ShieldCheck, Mail, Clock } from "lucide-react";
+import { UserCog, ShieldCheck, Mail, Clock } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-header";
 import { initials, formatDate } from "@/lib/utils";
 import { getCurrentTenant } from "@/lib/queries/tenant";
 import { listUsers } from "@/lib/queries/users";
+import { InviteUserDialog } from "./invite-dialog";
 
 export const dynamic = "force-dynamic";
 
@@ -42,12 +42,7 @@ export default async function UsuariosPage() {
       <PageHeader
         title="Usuários"
         description={`${users.length} ${users.length === 1 ? "pessoa tem acesso" : "pessoas têm acesso"} à plataforma da ${tenant.name}.`}
-        actions={
-          <Button disabled title="Em breve">
-            <Plus className="size-4" />
-            Convidar usuário
-          </Button>
-        }
+        actions={<InviteUserDialog />}
       />
 
       {users.length === 0 ? (
