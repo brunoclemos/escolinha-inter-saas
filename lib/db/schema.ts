@@ -459,6 +459,47 @@ export const evalPsych = pgTable(
 );
 
 /* ============================================================================
+ * Antropometria (medições corporais)
+ * ========================================================================== */
+
+export const anthropometryRecords = pgTable(
+  "anthropometry_records",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    athleteId: uuid("athlete_id")
+      .notNull()
+      .references(() => athletes.id, { onDelete: "cascade" }),
+    recordedById: uuid("recorded_by_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    recordedAt: date("recorded_at").notNull(),
+    // Numeros guardados como inteiros pra evitar float drift:
+    // - heightCm: cm direto (172 = 1.72m)
+    // - weightDg: peso em decigramas (725 = 72.5 kg)
+    // - bmiX10, bodyFatPctX10, biologicalAgeX10: valor * 10
+    heightCm: integer("height_cm"),
+    weightDg: integer("weight_dg"),
+    wingspanCm: integer("wingspan_cm"),
+    bodyFatPctX10: integer("body_fat_pct_x10"),
+    leanMassPctX10: integer("lean_mass_pct_x10"),
+    bmiX10: integer("bmi_x10"),
+    biologicalAgeX10: integer("biological_age_x10"),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    tenantIdx: index("anthro_tenant_idx").on(t.tenantId),
+    athleteIdx: index("anthro_athlete_idx").on(t.athleteId),
+    recordedIdx: index("anthro_recorded_idx").on(t.recordedAt),
+  })
+);
+
+/* ============================================================================
  * Tipos exportados
  * ========================================================================== */
 
@@ -474,6 +515,8 @@ export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;
 export type Evaluation = typeof evaluations.$inferSelect;
 export type NewEvaluation = typeof evaluations.$inferInsert;
+export type AnthropometryRecord = typeof anthropometryRecords.$inferSelect;
+export type NewAnthropometryRecord = typeof anthropometryRecords.$inferInsert;
 
 /* ============================================================================
  * SQL helpers (para uso futuro em RLS, search, etc)

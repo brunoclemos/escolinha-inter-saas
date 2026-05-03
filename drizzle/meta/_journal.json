@@ -15,6 +15,13 @@
       "when": 1777838094441,
       "tag": "0001_productive_wolf_cub",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777839458172,
+      "tag": "0002_curly_shape",
+      "breakpoints": true
     }
   ]
 }

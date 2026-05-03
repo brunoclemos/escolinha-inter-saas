@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Edit, Phone, Mail, ClipboardCheck, Plus } from "lucide-react";
+import { ArrowLeft, Edit, Phone, Mail, ClipboardCheck, Plus, Ruler } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import { ageFromDob, formatDate, initials } from "@/lib/utils";
 import { getCurrentTenant } from "@/lib/queries/tenant";
 import { getAthleteById } from "@/lib/queries/athletes";
 import { listEvaluationsByAthlete } from "@/lib/queries/evaluations";
+import { listAnthropometryByAthlete } from "@/lib/queries/anthropometry";
 import { AddGuardianDialog } from "./add-guardian-dialog";
 
 export const dynamic = "force-dynamic";
@@ -54,6 +55,8 @@ export default async function AthletePage({
   const age = ageFromDob(athlete.dob);
   const evals = await listEvaluationsByAthlete(tenant.id, id);
   const latestPublished = evals.find((e) => e.status === "published");
+  const measurements = await listAnthropometryByAthlete(tenant.id, id);
+  const latestMeasurement = measurements[0];
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-6">
@@ -223,6 +226,122 @@ export default async function AthletePage({
         </Card>
       </div>
 
+      <Card className="mt-4">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Ruler className="size-4 text-muted-foreground" />
+            Medições antropométricas
+            <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+              ({measurements.length})
+            </span>
+          </CardTitle>
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/atletas/${athlete.id}/medicoes/nova`}>
+              <Plus className="size-4" />
+              Nova medição
+            </Link>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {measurements.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              Nenhuma medição registrada. Cadastre a primeira pra começar a
+              acompanhar evolução física do atleta.
+            </p>
+          ) : (
+            <>
+              {latestMeasurement && (
+                <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  <MeasurementBadge
+                    label="Altura"
+                    value={
+                      latestMeasurement.heightCm
+                        ? `${latestMeasurement.heightCm} cm`
+                        : "—"
+                    }
+                  />
+                  <MeasurementBadge
+                    label="Peso"
+                    value={
+                      latestMeasurement.weightDg
+                        ? `${(latestMeasurement.weightDg / 10).toFixed(1)} kg`
+                        : "—"
+                    }
+                  />
+                  <MeasurementBadge
+                    label="IMC"
+                    value={
+                      latestMeasurement.bmiX10
+                        ? (latestMeasurement.bmiX10 / 10).toFixed(1)
+                        : "—"
+                    }
+                  />
+                  <MeasurementBadge
+                    label="% Gordura"
+                    value={
+                      latestMeasurement.bodyFatPctX10
+                        ? `${(latestMeasurement.bodyFatPctX10 / 10).toFixed(1)}%`
+                        : "—"
+                    }
+                  />
+                </div>
+              )}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b text-left text-xs uppercase tracking-wider text-muted-foreground">
+                      <th className="px-3 py-2 font-medium">Data</th>
+                      <th className="px-3 py-2 text-right font-medium">
+                        Altura
+                      </th>
+                      <th className="px-3 py-2 text-right font-medium">
+                        Peso
+                      </th>
+                      <th className="px-3 py-2 text-right font-medium">IMC</th>
+                      <th className="px-3 py-2 text-right font-medium">
+                        % Gordura
+                      </th>
+                      <th className="px-3 py-2 font-medium">Por</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {measurements.map((m) => (
+                      <tr
+                        key={m.id}
+                        className="border-b text-sm last:border-0"
+                      >
+                        <td className="px-3 py-2 font-mono text-xs">
+                          {formatDate(m.recordedAt)}
+                        </td>
+                        <td className="px-3 py-2 text-right font-mono">
+                          {m.heightCm ? `${m.heightCm} cm` : "—"}
+                        </td>
+                        <td className="px-3 py-2 text-right font-mono">
+                          {m.weightDg
+                            ? `${(m.weightDg / 10).toFixed(1)} kg`
+                            : "—"}
+                        </td>
+                        <td className="px-3 py-2 text-right font-mono">
+                          {m.bmiX10 ? (m.bmiX10 / 10).toFixed(1) : "—"}
+                        </td>
+                        <td className="px-3 py-2 text-right font-mono">
+                          {m.bodyFatPctX10
+                            ? `${(m.bodyFatPctX10 / 10).toFixed(1)}%`
+                            : "—"}
+                        </td>
+                        <td className="px-3 py-2 text-xs text-muted-foreground">
+                          {m.recordedByName ?? "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
@@ -320,6 +439,23 @@ export default async function AthletePage({
           </CardContent>
         </Card>
       </div>
+    </div>
+  );
+}
+
+function MeasurementBadge({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-md bg-muted/30 p-2 text-center">
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+        {label}
+      </p>
+      <p className="font-mono text-sm font-semibold tabular-nums">{value}</p>
     </div>
   );
 }
