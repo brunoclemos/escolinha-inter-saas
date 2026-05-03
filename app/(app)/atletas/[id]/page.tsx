@@ -23,6 +23,11 @@ import {
   PHYSICAL_TESTS_BY_CODE,
   formatTestValue,
 } from "@/lib/eval/physical-tests";
+import {
+  classifyMaturation,
+  maturationLabel,
+  maturationDescription,
+} from "@/lib/eval/phv";
 import { AddGuardianDialog } from "./add-guardian-dialog";
 import { PhotoUpload } from "./photo-upload";
 
@@ -257,40 +262,71 @@ export default async function AthletePage({
           ) : (
             <>
               {latestMeasurement && (
-                <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  <MeasurementBadge
-                    label="Altura"
-                    value={
-                      latestMeasurement.heightCm
-                        ? `${latestMeasurement.heightCm} cm`
-                        : "—"
-                    }
-                  />
-                  <MeasurementBadge
-                    label="Peso"
-                    value={
-                      latestMeasurement.weightDg
-                        ? `${(latestMeasurement.weightDg / 10).toFixed(1)} kg`
-                        : "—"
-                    }
-                  />
-                  <MeasurementBadge
-                    label="IMC"
-                    value={
-                      latestMeasurement.bmiX10
-                        ? (latestMeasurement.bmiX10 / 10).toFixed(1)
-                        : "—"
-                    }
-                  />
-                  <MeasurementBadge
-                    label="% Gordura"
-                    value={
-                      latestMeasurement.bodyFatPctX10
-                        ? `${(latestMeasurement.bodyFatPctX10 / 10).toFixed(1)}%`
-                        : "—"
-                    }
-                  />
-                </div>
+                <>
+                  <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    <MeasurementBadge
+                      label="Altura"
+                      value={
+                        latestMeasurement.heightCm
+                          ? `${latestMeasurement.heightCm} cm`
+                          : "—"
+                      }
+                    />
+                    <MeasurementBadge
+                      label="Peso"
+                      value={
+                        latestMeasurement.weightDg
+                          ? `${(latestMeasurement.weightDg / 10).toFixed(1)} kg`
+                          : "—"
+                      }
+                    />
+                    <MeasurementBadge
+                      label="IMC"
+                      value={
+                        latestMeasurement.bmiX10
+                          ? (latestMeasurement.bmiX10 / 10).toFixed(1)
+                          : "—"
+                      }
+                    />
+                    <MeasurementBadge
+                      label="% Gordura"
+                      value={
+                        latestMeasurement.bodyFatPctX10
+                          ? `${(latestMeasurement.bodyFatPctX10 / 10).toFixed(1)}%`
+                          : "—"
+                      }
+                    />
+                  </div>
+                  {latestMeasurement.biologicalAgeX10 && (() => {
+                    const bioAge = latestMeasurement.biologicalAgeX10 / 10;
+                    const status = classifyMaturation(bioAge, age);
+                    const variant: "ok" | "warn" =
+                      status === "on-track" ? "ok" : "warn";
+                    return (
+                      <div className="mb-4 flex items-start gap-3 rounded-md border bg-muted/30 p-3">
+                        <div className="flex-1">
+                          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                            Maturação biológica (estimativa)
+                          </p>
+                          <div className="mt-1 flex items-center gap-2">
+                            <span className="font-mono text-sm font-semibold">
+                              {bioAge.toFixed(1)} anos
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              vs {age} cronológicos
+                            </span>
+                            <Badge variant={variant} className="text-[10px]">
+                              {maturationLabel(status)}
+                            </Badge>
+                          </div>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {maturationDescription(status)}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </>
               )}
               <div className="overflow-x-auto">
                 <table className="w-full">

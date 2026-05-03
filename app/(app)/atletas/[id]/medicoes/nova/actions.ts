@@ -9,6 +9,8 @@ import { athletes, anthropometryRecords, users } from "@/lib/db/schema";
 import { getCurrentTenant } from "@/lib/queries/tenant";
 import { createClient } from "@/lib/supabase/server";
 import { calculateBmiX10 } from "@/lib/queries/anthropometry";
+import { estimateBiologicalAge } from "@/lib/eval/phv";
+import { ageFromDob } from "@/lib/utils";
 
 const schema = z.object({
   athleteId: z.string().uuid(),
@@ -63,9 +65,9 @@ export async function createAnthropometryAction(
 
   const tenant = await getCurrentTenant();
 
-  // Sanity check
+  // Sanity check + busca dob pra calcular PHV
   const [a] = await db
-    .select({ id: athletes.id })
+    .select({ id: athletes.id, dob: athletes.dob })
     .from(athletes)
     .where(
       and(
@@ -88,6 +90,9 @@ export async function createAnthropometryAction(
       ? Math.round(parsed.data.weightKg * 10)
       : null;
   const bmi = calculateBmiX10(heightCm, weightDg);
+  const chronoAge = ageFromDob(a.dob);
+  const bioAge = estimateBiologicalAge(heightCm, chronoAge);
+  const bioAgeX10 = bioAge !== null ? Math.round(bioAge * 10) : null;
 
   try {
     await db.insert(anthropometryRecords).values({
@@ -103,6 +108,7 @@ export async function createAnthropometryAction(
           ? Math.round(parsed.data.bodyFatPct * 10)
           : null,
       bmiX10: bmi,
+      biologicalAgeX10: bioAgeX10,
       notes: parsed.data.notes,
     });
   } catch (e) {
