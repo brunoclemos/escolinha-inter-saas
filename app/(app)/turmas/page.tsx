@@ -1,10 +1,10 @@
-import { Plus, Shield, Users } from "lucide-react";
+import { Shield, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-header";
 import { getCurrentTenant } from "@/lib/queries/tenant";
 import { listCategoriesWithStats } from "@/lib/queries/categories";
+import { NewCategoryDialog } from "./new-category-dialog";
 
 export const dynamic = "force-dynamic";
 
@@ -17,12 +17,7 @@ export default async function TurmasPage() {
       <PageHeader
         title="Turmas"
         description={`${categories.length} ${categories.length === 1 ? "categoria" : "categorias"} cadastradas.`}
-        actions={
-          <Button disabled title="Em breve">
-            <Plus className="size-4" />
-            Nova turma
-          </Button>
-        }
+        actions={<NewCategoryDialog />}
       />
 
       {categories.length === 0 ? (
