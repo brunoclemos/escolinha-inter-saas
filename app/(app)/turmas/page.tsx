@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Shield, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -35,37 +36,45 @@ export default async function TurmasPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {categories.map((cat) => (
-            <Card key={cat.id} className="overflow-hidden">
-              <div
-                className="h-1.5 w-full"
-                style={{ backgroundColor: cat.color ?? "hsl(var(--brand))" }}
-              />
-              <CardContent className="space-y-3 pt-5">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h3 className="font-semibold">{cat.name}</h3>
-                    <p className="text-xs text-muted-foreground">
-                      {cat.ageMin === cat.ageMax
-                        ? `${cat.ageMin} anos`
-                        : `${cat.ageMin} a ${cat.ageMax} anos`}
-                    </p>
+            <Link
+              key={cat.id}
+              href={`/turmas/${cat.id}`}
+              className="group"
+            >
+              <Card className="h-full overflow-hidden transition-shadow group-hover:shadow-md">
+                <div
+                  className="h-1.5 w-full"
+                  style={{ backgroundColor: cat.color ?? "hsl(var(--brand))" }}
+                />
+                <CardContent className="space-y-3 pt-5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h3 className="font-semibold group-hover:underline">
+                        {cat.name}
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        {cat.ageMin === cat.ageMax
+                          ? `${cat.ageMin} anos`
+                          : `${cat.ageMin} a ${cat.ageMax} anos`}
+                      </p>
+                    </div>
+                    <Badge variant="soft">
+                      <Users className="mr-1 size-3" />
+                      {cat.athleteCount}
+                    </Badge>
                   </div>
-                  <Badge variant="soft">
-                    <Users className="mr-1 size-3" />
-                    {cat.athleteCount}
-                  </Badge>
-                </div>
 
-                <div className="border-t pt-3 text-xs text-muted-foreground">
-                  <span className="font-medium uppercase tracking-wider">
-                    Professor:{" "}
-                  </span>
-                  {cat.coachName ?? (
-                    <span className="italic">Não atribuído</span>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                  <div className="border-t pt-3 text-xs text-muted-foreground">
+                    <span className="font-medium uppercase tracking-wider">
+                      Professor:{" "}
+                    </span>
+                    {cat.coachName ?? (
+                      <span className="italic">Não atribuído</span>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       )}
