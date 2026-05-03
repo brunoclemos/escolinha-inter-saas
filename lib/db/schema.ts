@@ -61,6 +61,11 @@ export const dominantFootEnum = pgEnum("dominant_foot", [
   "both",
 ]);
 
+export const evaluationStatusEnum = pgEnum("evaluation_status", [
+  "draft",
+  "published",
+]);
+
 export const guardianRelationshipEnum = pgEnum("guardian_relationship", [
   "father",
   "mother",
@@ -366,6 +371,94 @@ export const auditLog = pgTable(
 );
 
 /* ============================================================================
+ * Avaliações
+ * ========================================================================== */
+
+export const evaluations = pgTable(
+  "evaluations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    athleteId: uuid("athlete_id")
+      .notNull()
+      .references(() => athletes.id, { onDelete: "cascade" }),
+    evaluatorId: uuid("evaluator_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    periodLabel: text("period_label"),
+    periodStart: date("period_start"),
+    periodEnd: date("period_end"),
+    status: evaluationStatusEnum("status").notNull().default("draft"),
+    summaryText: text("summary_text"),
+    techScore: integer("tech_score"),
+    tacticalScore: integer("tactical_score"),
+    psychScore: integer("psych_score"),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    tenantIdx: index("eval_tenant_idx").on(t.tenantId),
+    athleteIdx: index("eval_athlete_idx").on(t.athleteId),
+    statusIdx: index("eval_status_idx").on(t.tenantId, t.status),
+  })
+);
+
+export const evalTechnical = pgTable(
+  "eval_technical",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    evaluationId: uuid("evaluation_id")
+      .notNull()
+      .references(() => evaluations.id, { onDelete: "cascade" }),
+    fundamental: text("fundamental").notNull(),
+    score: integer("score").notNull(),
+    comment: text("comment"),
+  },
+  (t) => ({
+    evalIdx: index("eval_tech_eval_idx").on(t.evaluationId),
+  })
+);
+
+export const evalTactical = pgTable(
+  "eval_tactical",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    evaluationId: uuid("evaluation_id")
+      .notNull()
+      .references(() => evaluations.id, { onDelete: "cascade" }),
+    dimension: text("dimension").notNull(),
+    score: integer("score").notNull(),
+    comment: text("comment"),
+  },
+  (t) => ({
+    evalIdx: index("eval_tactical_eval_idx").on(t.evaluationId),
+  })
+);
+
+export const evalPsych = pgTable(
+  "eval_psych",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    evaluationId: uuid("evaluation_id")
+      .notNull()
+      .references(() => evaluations.id, { onDelete: "cascade" }),
+    dimension: text("dimension").notNull(),
+    score: integer("score").notNull(),
+    comment: text("comment"),
+  },
+  (t) => ({
+    evalIdx: index("eval_psych_eval_idx").on(t.evaluationId),
+  })
+);
+
+/* ============================================================================
  * Tipos exportados
  * ========================================================================== */
 
@@ -379,6 +472,8 @@ export type Guardian = typeof guardians.$inferSelect;
 export type NewGuardian = typeof guardians.$inferInsert;
 export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;
+export type Evaluation = typeof evaluations.$inferSelect;
+export type NewEvaluation = typeof evaluations.$inferInsert;
 
 /* ============================================================================
  * SQL helpers (para uso futuro em RLS, search, etc)

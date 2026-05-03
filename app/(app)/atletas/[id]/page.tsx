@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Edit, Phone, Mail } from "lucide-react";
+import { ArrowLeft, Edit, Phone, Mail, ClipboardCheck, Plus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,9 +11,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { ScoreRadar } from "@/components/score-radar";
 import { ageFromDob, formatDate, initials } from "@/lib/utils";
 import { getCurrentTenant } from "@/lib/queries/tenant";
 import { getAthleteById } from "@/lib/queries/athletes";
+import { listEvaluationsByAthlete } from "@/lib/queries/evaluations";
 import { AddGuardianDialog } from "./add-guardian-dialog";
 
 export const dynamic = "force-dynamic";
@@ -50,6 +52,8 @@ export default async function AthletePage({
   if (!data) notFound();
   const { athlete, categories, guardians } = data;
   const age = ageFromDob(athlete.dob);
+  const evals = await listEvaluationsByAthlete(tenant.id, id);
+  const latestPublished = evals.find((e) => e.status === "published");
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-6">
@@ -60,12 +64,20 @@ export default async function AthletePage({
             Atletas
           </Link>
         </Button>
-        <Button variant="outline" size="sm" asChild>
-          <Link href={`/atletas/${athlete.id}/editar`}>
-            <Edit className="size-4" />
-            Editar
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/atletas/${athlete.id}/editar`}>
+              <Edit className="size-4" />
+              Editar
+            </Link>
+          </Button>
+          <Button size="sm" asChild>
+            <Link href={`/atletas/${athlete.id}/avaliar`}>
+              <Plus className="size-4" />
+              Nova avaliação
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="mb-6 flex flex-wrap items-center gap-4">
@@ -210,6 +222,117 @@ export default async function AthletePage({
           </CardContent>
         </Card>
       </div>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-3">
+        <Card className="lg:col-span-1">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <ClipboardCheck className="size-4 text-muted-foreground" />
+              Última avaliação
+            </CardTitle>
+            {latestPublished && (
+              <Badge variant="soft" className="text-[10px]">
+                {latestPublished.periodLabel}
+              </Badge>
+            )}
+          </CardHeader>
+          <CardContent className="flex flex-col items-center gap-3">
+            {latestPublished ? (
+              <>
+                <ScoreRadar
+                  tech={latestPublished.techScore}
+                  tactical={latestPublished.tacticalScore}
+                  psych={latestPublished.psychScore}
+                  size={200}
+                />
+                <Button variant="outline" size="sm" asChild className="w-full">
+                  <Link
+                    href={`/atletas/${athlete.id}/avaliacoes/${latestPublished.id}`}
+                  >
+                    Ver detalhes
+                  </Link>
+                </Button>
+              </>
+            ) : (
+              <div className="flex flex-col items-center gap-3 py-6 text-center">
+                <ClipboardCheck className="size-10 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  Nenhuma avaliação publicada ainda.
+                </p>
+                <Button size="sm" asChild>
+                  <Link href={`/atletas/${athlete.id}/avaliar`}>
+                    <Plus className="size-4" />
+                    Avaliar agora
+                  </Link>
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-2">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">
+              Histórico de avaliações
+              <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+                ({evals.length})
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {evals.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">
+                Nenhuma avaliação registrada. Quando você avaliar este atleta,
+                o histórico aparece aqui.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {evals.map((e) => (
+                  <Link
+                    key={e.id}
+                    href={`/atletas/${athlete.id}/avaliacoes/${e.id}`}
+                    className="flex items-center justify-between gap-3 rounded-md border p-3 transition-colors hover:bg-muted/40"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium">
+                          {e.periodLabel ?? "Avaliação"}
+                        </p>
+                        {e.status === "draft" && (
+                          <Badge variant="warn" className="text-[10px]">
+                            Rascunho
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {e.evaluatorName ?? "Sistema"} · {formatDate(e.createdAt)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs">
+                      <ScoreBadge label="Téc" v={e.techScore} />
+                      <ScoreBadge label="Tát" v={e.tacticalScore} />
+                      <ScoreBadge label="Psi" v={e.psychScore} />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function ScoreBadge({ label, v }: { label: string; v: number | null }) {
+  return (
+    <div className="text-center">
+      <p className="text-[9px] uppercase tracking-wider text-muted-foreground">
+        {label}
+      </p>
+      <p className="font-mono text-sm font-semibold tabular-nums">
+        {v !== null ? (v / 10).toFixed(1) : "—"}
+      </p>
     </div>
   );
 }
