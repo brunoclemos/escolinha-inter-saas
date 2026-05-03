@@ -1,6 +1,6 @@
 import { and, eq, ilike, asc } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { athletes, athleteCategories, categories } from "@/lib/db/schema";
+import { athletes, athleteCategories, categories, guardians, athleteGuardians } from "@/lib/db/schema";
 
 export type AthleteListItem = Awaited<ReturnType<typeof listAthletes>>[number];
 
@@ -45,4 +45,43 @@ export async function countAthletes(tenantId: string) {
       and(eq(athletes.tenantId, tenantId), eq(athletes.status, "active"))
     );
   return result.length;
+}
+
+export async function getAthleteById(tenantId: string, athleteId: string) {
+  const [athlete] = await db
+    .select()
+    .from(athletes)
+    .where(and(eq(athletes.tenantId, tenantId), eq(athletes.id, athleteId)))
+    .limit(1);
+
+  if (!athlete) return null;
+
+  const cats = await db
+    .select({
+      id: categories.id,
+      name: categories.name,
+      ageMin: categories.ageMin,
+      ageMax: categories.ageMax,
+      color: categories.color,
+    })
+    .from(athleteCategories)
+    .innerJoin(categories, eq(categories.id, athleteCategories.categoryId))
+    .where(eq(athleteCategories.athleteId, athleteId));
+
+  const guards = await db
+    .select({
+      id: guardians.id,
+      fullName: guardians.fullName,
+      relationship: guardians.relationship,
+      phone: guardians.phone,
+      whatsapp: guardians.whatsapp,
+      email: guardians.email,
+      isPrimary: athleteGuardians.isPrimary,
+      financialResponsible: athleteGuardians.financialResponsible,
+    })
+    .from(athleteGuardians)
+    .innerJoin(guardians, eq(guardians.id, athleteGuardians.guardianId))
+    .where(eq(athleteGuardians.athleteId, athleteId));
+
+  return { athlete, categories: cats, guardians: guards };
 }
