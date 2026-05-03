@@ -60,9 +60,11 @@ export default async function AthletePage({
             Atletas
           </Link>
         </Button>
-        <Button variant="outline" size="sm" disabled title="Em breve">
-          <Edit className="size-4" />
-          Editar
+        <Button variant="outline" size="sm" asChild>
+          <Link href={`/atletas/${athlete.id}/editar`}>
+            <Edit className="size-4" />
+            Editar
+          </Link>
         </Button>
       </div>
 
