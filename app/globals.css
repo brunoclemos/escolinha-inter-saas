@@ -113,3 +113,45 @@
     border-radius: 3px;
   }
 }
+
+/* ============================================================================
+ * Print styles — Para a rota /pdf imprimir limpa.
+ * ========================================================================== */
+@media print {
+  /* Esconde sidebar, topbar e qualquer elemento marcado como no-print */
+  aside,
+  header.flex.h-\[52px\],
+  .no-print {
+    display: none !important;
+  }
+
+  body,
+  html {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  main {
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  .report-root {
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 16mm 14mm !important;
+    box-shadow: none !important;
+  }
+
+  /* Tamanho de página A4 */
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  /* Evitar quebras feias dentro de cards */
+  section {
+    page-break-inside: avoid;
+  }
+}
+

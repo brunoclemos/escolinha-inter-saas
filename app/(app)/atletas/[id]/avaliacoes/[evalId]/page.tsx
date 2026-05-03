@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Calendar, User2, FileText } from "lucide-react";
+import { ArrowLeft, Calendar, FileText, Printer } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -44,12 +44,20 @@ export default async function EvaluationDetailPage({
             Voltar pro atleta
           </Link>
         </Button>
-        <Badge
-          variant={evaluation.status === "published" ? "ok" : "soft"}
-          className="text-xs"
-        >
-          {evaluation.status === "published" ? "Publicada" : "Rascunho"}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge
+            variant={evaluation.status === "published" ? "ok" : "soft"}
+            className="text-xs"
+          >
+            {evaluation.status === "published" ? "Publicada" : "Rascunho"}
+          </Badge>
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/atletas/${id}/avaliacoes/${evalId}/pdf`}>
+              <Printer className="size-4" />
+              Baixar PDF
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="mb-6 flex items-center gap-3">
