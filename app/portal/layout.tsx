@@ -38,6 +38,8 @@ export default async function PortalLayout({
             id: user.id,
             name: profile?.fullName,
           }}
+          variant="parent"
+          tenantName={tenant.name}
         />
         <main className="flex-1 overflow-y-auto scrollbar-thin">
           {children}

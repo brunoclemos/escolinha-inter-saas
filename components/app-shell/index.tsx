@@ -18,13 +18,14 @@ export function AppShell({
 }) {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
+      {/* Desktop sidebar */}
       <Sidebar
         className="hidden md:flex"
         tenant={tenant}
         athleteCount={tenant.athleteCount}
       />
       <div className="flex flex-1 flex-col overflow-hidden">
-        <Topbar user={user} />
+        <Topbar user={user} tenant={tenant} variant="admin" />
         <main className="flex-1 overflow-y-auto scrollbar-thin">
           {children}
         </main>
