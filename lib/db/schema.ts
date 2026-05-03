@@ -66,6 +66,34 @@ export const evaluationStatusEnum = pgEnum("evaluation_status", [
   "published",
 ]);
 
+export const attendanceStatusEnum = pgEnum("attendance_status", [
+  "present",
+  "absent",
+  "late",
+  "excused",
+  "injured",
+]);
+
+export const matchKindEnum = pgEnum("match_kind", [
+  "friendly",
+  "official",
+  "training",
+  "tournament",
+]);
+
+export const matchResultEnum = pgEnum("match_result", [
+  "win",
+  "draw",
+  "loss",
+  "pending",
+]);
+
+export const injurySeverityEnum = pgEnum("injury_severity", [
+  "minor",
+  "moderate",
+  "severe",
+]);
+
 export const guardianRelationshipEnum = pgEnum("guardian_relationship", [
   "father",
   "mother",
@@ -500,6 +528,203 @@ export const anthropometryRecords = pgTable(
 );
 
 /* ============================================================================
+ * Bateria física (sprints, saltos, agilidade, resistência)
+ * ========================================================================== */
+
+export const physicalTests = pgTable(
+  "physical_tests",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    athleteId: uuid("athlete_id")
+      .notNull()
+      .references(() => athletes.id, { onDelete: "cascade" }),
+    recordedById: uuid("recorded_by_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    recordedAt: date("recorded_at").notNull(),
+    testCode: text("test_code").notNull(),
+    // Valor guardado * 1000 (millimétrico) — evita float, suporta segundos
+    // (3.62s → 3620), centímetros (32.5 → 32500) ou metros distância
+    valueX1000: integer("value_x1000").notNull(),
+    unit: text("unit").notNull(),
+    condition: jsonb("condition").$type<{
+      field?: string;
+      shift?: "morning" | "afternoon" | "evening";
+      weather?: "dry" | "wet" | "indoor";
+    }>(),
+    observation: text("observation"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    tenantIdx: index("phys_tenant_idx").on(t.tenantId),
+    athleteIdx: index("phys_athlete_idx").on(t.athleteId),
+    testIdx: index("phys_test_idx").on(t.testCode, t.recordedAt),
+  })
+);
+
+/* ============================================================================
+ * Treinos & presença
+ * ========================================================================== */
+
+export const trainingSessions = pgTable(
+  "training_sessions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    categoryId: uuid("category_id").references(() => categories.id, {
+      onDelete: "set null",
+    }),
+    coachId: uuid("coach_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    date: date("date").notNull(),
+    startTime: text("start_time"),
+    durationMin: integer("duration_min"),
+    focus: text("focus"),
+    field: text("field"),
+    weather: text("weather"),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    tenantIdx: index("training_tenant_idx").on(t.tenantId),
+    dateIdx: index("training_date_idx").on(t.tenantId, t.date),
+    categoryIdx: index("training_category_idx").on(t.categoryId),
+  })
+);
+
+export const attendance = pgTable(
+  "attendance",
+  {
+    sessionId: uuid("session_id")
+      .notNull()
+      .references(() => trainingSessions.id, { onDelete: "cascade" }),
+    athleteId: uuid("athlete_id")
+      .notNull()
+      .references(() => athletes.id, { onDelete: "cascade" }),
+    status: attendanceStatusEnum("status").notNull().default("present"),
+    notes: text("notes"),
+    recordedAt: timestamp("recorded_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.sessionId, t.athleteId] }),
+    athleteIdx: index("att_athlete_idx").on(t.athleteId),
+  })
+);
+
+/* ============================================================================
+ * Jogos & estatísticas
+ * ========================================================================== */
+
+export const matches = pgTable(
+  "matches",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    categoryId: uuid("category_id").references(() => categories.id, {
+      onDelete: "set null",
+    }),
+    kind: matchKindEnum("kind").notNull().default("friendly"),
+    opponent: text("opponent").notNull(),
+    date: date("date").notNull(),
+    startTime: text("start_time"),
+    location: text("location"),
+    isHome: boolean("is_home").notNull().default(true),
+    scoreUs: integer("score_us"),
+    scoreThem: integer("score_them"),
+    result: matchResultEnum("result").notNull().default("pending"),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    tenantIdx: index("match_tenant_idx").on(t.tenantId),
+    dateIdx: index("match_date_idx").on(t.tenantId, t.date),
+    categoryIdx: index("match_category_idx").on(t.categoryId),
+  })
+);
+
+export const matchStats = pgTable(
+  "match_stats",
+  {
+    matchId: uuid("match_id")
+      .notNull()
+      .references(() => matches.id, { onDelete: "cascade" }),
+    athleteId: uuid("athlete_id")
+      .notNull()
+      .references(() => athletes.id, { onDelete: "cascade" }),
+    minutesPlayed: integer("minutes_played"),
+    goals: integer("goals").notNull().default(0),
+    assists: integer("assists").notNull().default(0),
+    yellowCards: integer("yellow_cards").notNull().default(0),
+    redCards: integer("red_cards").notNull().default(0),
+    positionPlayed: text("position_played"),
+    rating: integer("rating"),
+    notes: text("notes"),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.matchId, t.athleteId] }),
+    athleteIdx: index("ms_athlete_idx").on(t.athleteId),
+  })
+);
+
+/* ============================================================================
+ * Lesões / saúde
+ * ========================================================================== */
+
+export const injuries = pgTable(
+  "injuries",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    athleteId: uuid("athlete_id")
+      .notNull()
+      .references(() => athletes.id, { onDelete: "cascade" }),
+    type: text("type").notNull(),
+    bodyPart: text("body_part"),
+    severity: injurySeverityEnum("severity").notNull().default("minor"),
+    occurredAt: date("occurred_at").notNull(),
+    daysOut: integer("days_out"),
+    returnedAt: date("returned_at"),
+    description: text("description"),
+    treatment: text("treatment"),
+    attachmentUrl: text("attachment_url"),
+    recordedById: uuid("recorded_by_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    tenantIdx: index("injury_tenant_idx").on(t.tenantId),
+    athleteIdx: index("injury_athlete_idx").on(t.athleteId),
+  })
+);
+
+/* ============================================================================
  * Tipos exportados
  * ========================================================================== */
 
@@ -517,6 +742,14 @@ export type Evaluation = typeof evaluations.$inferSelect;
 export type NewEvaluation = typeof evaluations.$inferInsert;
 export type AnthropometryRecord = typeof anthropometryRecords.$inferSelect;
 export type NewAnthropometryRecord = typeof anthropometryRecords.$inferInsert;
+export type PhysicalTest = typeof physicalTests.$inferSelect;
+export type NewPhysicalTest = typeof physicalTests.$inferInsert;
+export type TrainingSession = typeof trainingSessions.$inferSelect;
+export type NewTrainingSession = typeof trainingSessions.$inferInsert;
+export type Match = typeof matches.$inferSelect;
+export type NewMatch = typeof matches.$inferInsert;
+export type Injury = typeof injuries.$inferSelect;
+export type NewInjury = typeof injuries.$inferInsert;
 
 /* ============================================================================
  * SQL helpers (para uso futuro em RLS, search, etc)

@@ -12,6 +12,7 @@ import {
   ScrollText,
   Settings,
   History,
+  Trophy,
 } from "lucide-react";
 
 export type NavItem = {
@@ -34,6 +35,7 @@ export const NAV: NavGroup[] = [
       { href: "/atletas", label: "Atletas", icon: Users },
       { href: "/turmas", label: "Turmas", icon: Shield },
       { href: "/treinos", label: "Treinos", icon: Calendar },
+      { href: "/jogos", label: "Jogos", icon: Trophy },
       { href: "/avaliacoes", label: "Avaliações", icon: ClipboardCheck },
     ],
   },

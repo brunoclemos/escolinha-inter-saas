@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Edit, Phone, Mail, ClipboardCheck, Plus, Ruler } from "lucide-react";
+import { ArrowLeft, Edit, Phone, Mail, ClipboardCheck, Plus, Ruler, Timer, Heart } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,14 @@ import { getCurrentTenant } from "@/lib/queries/tenant";
 import { getAthleteById } from "@/lib/queries/athletes";
 import { listEvaluationsByAthlete } from "@/lib/queries/evaluations";
 import { listAnthropometryByAthlete } from "@/lib/queries/anthropometry";
+import { listPhysicalTestsByAthlete } from "@/lib/queries/physical";
+import { listInjuriesByAthlete } from "@/lib/queries/injuries";
+import {
+  PHYSICAL_TESTS_BY_CODE,
+  formatTestValue,
+} from "@/lib/eval/physical-tests";
 import { AddGuardianDialog } from "./add-guardian-dialog";
+import { PhotoUpload } from "./photo-upload";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +64,8 @@ export default async function AthletePage({
   const latestPublished = evals.find((e) => e.status === "published");
   const measurements = await listAnthropometryByAthlete(tenant.id, id);
   const latestMeasurement = measurements[0];
+  const physicalRecords = await listPhysicalTestsByAthlete(tenant.id, id);
+  const injuriesList = await listInjuriesByAthlete(tenant.id, id);
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-6">
@@ -84,14 +93,11 @@ export default async function AthletePage({
       </div>
 
       <div className="mb-6 flex flex-wrap items-center gap-4">
-        <Avatar className="size-20">
-          {athlete.photoUrl ? (
-            <AvatarImage src={athlete.photoUrl} alt={athlete.fullName} />
-          ) : null}
-          <AvatarFallback className="bg-brand-soft text-brand-text text-xl">
-            {initials(athlete.fullName)}
-          </AvatarFallback>
-        </Avatar>
+        <PhotoUpload
+          athleteId={athlete.id}
+          fullName={athlete.fullName}
+          initialUrl={athlete.photoUrl}
+        />
         <div className="flex-1">
           <h1 className="text-2xl font-semibold tracking-tight">
             {athlete.fullName}
@@ -338,6 +344,154 @@ export default async function AthletePage({
                 </table>
               </div>
             </>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="mt-4">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Heart className="size-4 text-muted-foreground" />
+            Histórico de lesões
+            <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+              ({injuriesList.length})
+            </span>
+          </CardTitle>
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/atletas/${athlete.id}/lesoes/nova`}>
+              <Plus className="size-4" />
+              Registrar lesão
+            </Link>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {injuriesList.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              Nenhuma lesão registrada. Que continue assim.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {injuriesList.map((i) => {
+                const sevVariant: "ok" | "warn" | "err" =
+                  i.severity === "severe"
+                    ? "err"
+                    : i.severity === "moderate"
+                      ? "warn"
+                      : "ok";
+                const sevLabel =
+                  i.severity === "severe"
+                    ? "Severa"
+                    : i.severity === "moderate"
+                      ? "Moderada"
+                      : "Leve";
+                return (
+                  <div key={i.id} className="rounded-md border p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-medium text-sm">{i.type}</p>
+                          <Badge variant={sevVariant} className="text-[10px]">
+                            {sevLabel}
+                          </Badge>
+                          {i.bodyPart && (
+                            <span className="text-xs text-muted-foreground">
+                              · {i.bodyPart}
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          Em {formatDate(i.occurredAt)}
+                          {i.daysOut != null && ` · ${i.daysOut} dias afastado`}
+                          {i.returnedAt &&
+                            ` · retornou em ${formatDate(i.returnedAt)}`}
+                        </p>
+                        {i.description && (
+                          <p className="mt-2 text-xs italic text-muted-foreground">
+                            "{i.description}"
+                          </p>
+                        )}
+                      </div>
+                      {!i.returnedAt && (
+                        <Badge variant="warn" className="text-[10px]">
+                          Em recuperação
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="mt-4">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Timer className="size-4 text-muted-foreground" />
+            Testes físicos
+            <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+              ({physicalRecords.length})
+            </span>
+          </CardTitle>
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/atletas/${athlete.id}/fisico/nova`}>
+              <Plus className="size-4" />
+              Novo teste
+            </Link>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {physicalRecords.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              Nenhum teste físico registrado. Sprint, salto, agilidade,
+              resistência — bateria adaptada à categoria do atleta.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b text-left text-xs uppercase tracking-wider text-muted-foreground">
+                    <th className="px-3 py-2 font-medium">Data</th>
+                    <th className="px-3 py-2 font-medium">Teste</th>
+                    <th className="px-3 py-2 text-right font-medium">
+                      Resultado
+                    </th>
+                    <th className="px-3 py-2 font-medium">Condição</th>
+                    <th className="px-3 py-2 font-medium">Por</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {physicalRecords.map((r) => {
+                    const spec = PHYSICAL_TESTS_BY_CODE[r.testCode];
+                    return (
+                      <tr
+                        key={r.id}
+                        className="border-b text-sm last:border-0"
+                      >
+                        <td className="px-3 py-2 font-mono text-xs">
+                          {formatDate(r.recordedAt)}
+                        </td>
+                        <td className="px-3 py-2">
+                          {spec?.label ?? r.testCode}
+                        </td>
+                        <td className="px-3 py-2 text-right font-mono font-semibold">
+                          {spec
+                            ? formatTestValue(spec, r.valueX1000)
+                            : `${(r.valueX1000 / 1000).toFixed(2)} ${r.unit}`}
+                        </td>
+                        <td className="px-3 py-2 text-xs text-muted-foreground">
+                          {r.condition?.field ?? "—"}
+                        </td>
+                        <td className="px-3 py-2 text-xs text-muted-foreground">
+                          {r.recordedByName ?? "—"}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
         </CardContent>
       </Card>
