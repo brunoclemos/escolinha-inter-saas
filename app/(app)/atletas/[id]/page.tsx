@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ScoreRadar } from "@/components/score-radar";
+import { ScoreRadarOverlay } from "@/components/score-radar-overlay";
+import { LineChart } from "@/components/line-chart";
 import { ageFromDob, formatDate, initials } from "@/lib/utils";
 import { getCurrentTenant } from "@/lib/queries/tenant";
 import { getAthleteById } from "@/lib/queries/athletes";
@@ -66,7 +68,9 @@ export default async function AthletePage({
   const { athlete, categories, guardians } = data;
   const age = ageFromDob(athlete.dob);
   const evals = await listEvaluationsByAthlete(tenant.id, id);
-  const latestPublished = evals.find((e) => e.status === "published");
+  const publishedEvals = evals.filter((e) => e.status === "published");
+  const latestPublished = publishedEvals[0];
+  const previousPublished = publishedEvals[1];
   const measurements = await listAnthropometryByAthlete(tenant.id, id);
   const latestMeasurement = measurements[0];
   const physicalRecords = await listPhysicalTestsByAthlete(tenant.id, id);
@@ -297,6 +301,40 @@ export default async function AthletePage({
                       }
                     />
                   </div>
+                  {measurements.length >= 2 && (
+                    <div className="mb-4 rounded-md border bg-card p-3">
+                      <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                        Evolução de altura e peso
+                      </p>
+                      <LineChart
+                        height={180}
+                        series={[
+                          {
+                            label: "Altura (cm)",
+                            color: "hsl(var(--brand))",
+                            unit: "cm",
+                            points: measurements
+                              .filter((m) => m.heightCm)
+                              .map((m) => ({
+                                date: m.recordedAt,
+                                value: m.heightCm as number,
+                              })),
+                          },
+                          {
+                            label: "Peso (kg)",
+                            color: "hsl(var(--ok))",
+                            unit: "kg",
+                            points: measurements
+                              .filter((m) => m.weightDg)
+                              .map((m) => ({
+                                date: m.recordedAt,
+                                value: (m.weightDg as number) / 10,
+                              })),
+                          },
+                        ]}
+                      />
+                    </div>
+                  )}
                   {latestMeasurement.biologicalAgeX10 && (() => {
                     const bioAge = latestMeasurement.biologicalAgeX10 / 10;
                     const status = classifyMaturation(bioAge, age);
@@ -548,12 +586,30 @@ export default async function AthletePage({
           <CardContent className="flex flex-col items-center gap-3">
             {latestPublished ? (
               <>
-                <ScoreRadar
-                  tech={latestPublished.techScore}
-                  tactical={latestPublished.tacticalScore}
-                  psych={latestPublished.psychScore}
-                  size={200}
-                />
+                {previousPublished ? (
+                  <ScoreRadarOverlay
+                    current={{
+                      tech: latestPublished.techScore,
+                      tactical: latestPublished.tacticalScore,
+                      psych: latestPublished.psychScore,
+                      label: latestPublished.periodLabel ?? "Atual",
+                    }}
+                    previous={{
+                      tech: previousPublished.techScore,
+                      tactical: previousPublished.tacticalScore,
+                      psych: previousPublished.psychScore,
+                      label: previousPublished.periodLabel ?? "Anterior",
+                    }}
+                    size={220}
+                  />
+                ) : (
+                  <ScoreRadar
+                    tech={latestPublished.techScore}
+                    tactical={latestPublished.tacticalScore}
+                    psych={latestPublished.psychScore}
+                    size={200}
+                  />
+                )}
                 <Button variant="outline" size="sm" asChild className="w-full">
                   <Link
                     href={`/atletas/${athlete.id}/avaliacoes/${latestPublished.id}`}

@@ -2,10 +2,10 @@
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search, Bell, LogOut } from "lucide-react";
+import { Bell, LogOut } from "lucide-react";
 import { logoutAction } from "@/app/(auth)/login/actions";
 import { OnzeMark } from "@/components/onze-mark";
+import { GlobalSearch } from "@/components/search-dialog";
 import { MobileNav } from "./mobile-nav";
 import type { AppShellUser } from ".";
 import type { SidebarTenantInfo } from "./sidebar";
@@ -41,27 +41,13 @@ export function Topbar({
           <OnzeMark size="sm" showWordmark={false} />
         </div>
 
-        <div className="relative hidden max-w-md flex-1 sm:block">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Buscar..."
-            className="h-8 pl-8 pr-12 text-sm"
-          />
-          <kbd className="pointer-events-none absolute right-2 top-1/2 hidden -translate-y-1/2 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground sm:flex">
-            ⌘K
-          </kbd>
-        </div>
+        {/* Search funcional ⌘K — desktop */}
+        <GlobalSearch variant="full" />
       </div>
 
       <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label="Buscar"
-          className="sm:hidden"
-        >
-          <Search className="size-4" />
-        </Button>
+        {/* Search icon — mobile */}
+        <GlobalSearch variant="icon" />
         <Button variant="ghost" size="icon" aria-label="Notificações">
           <Bell className="size-4" />
         </Button>
