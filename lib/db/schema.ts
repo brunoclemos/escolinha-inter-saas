@@ -94,6 +94,22 @@ export const injurySeverityEnum = pgEnum("injury_severity", [
   "severe",
 ]);
 
+export const exerciseCategoryEnum = pgEnum("exercise_category", [
+  "technical",
+  "tactical",
+  "physical",
+  "warmup",
+  "cooldown",
+  "fun",
+  "set_pieces",
+  "goalkeeper",
+]);
+
+export const exerciseSourceEnum = pgEnum("exercise_source", [
+  "platform",
+  "tenant",
+]);
+
 export const guardianRelationshipEnum = pgEnum("guardian_relationship", [
   "father",
   "mother",
@@ -725,6 +741,79 @@ export const injuries = pgTable(
 );
 
 /* ============================================================================
+ * Biblioteca de exercícios (drills/treinos)
+ * ========================================================================== */
+
+export const exercises = pgTable(
+  "exercises",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    // tenantId null = exercicio global da plataforma (visivel a todos)
+    // tenantId set = customizado por uma escolinha
+    tenantId: uuid("tenant_id").references(() => tenants.id, {
+      onDelete: "cascade",
+    }),
+    source: exerciseSourceEnum("source").notNull().default("tenant"),
+    name: text("name").notNull(),
+    slug: text("slug"),
+    category: exerciseCategoryEnum("category").notNull(),
+    objective: text("objective"),
+    ageMin: integer("age_min").notNull().default(5),
+    ageMax: integer("age_max").notNull().default(17),
+    durationMin: integer("duration_min"),
+    playersMin: integer("players_min"),
+    playersMax: integer("players_max"),
+    difficulty: integer("difficulty"), // 1-5
+    materials: text("materials").array(),
+    instructions: text("instructions"),
+    variations: text("variations"),
+    coachingPoints: text("coaching_points"),
+    videoUrl: text("video_url"),
+    imageUrl: text("image_url"),
+    pitchLayout: jsonb("pitch_layout").$type<{
+      half?: boolean;
+      players?: { x: number; y: number; team: "A" | "B" | "neutral"; label?: string; role?: string }[];
+      cones?: { x: number; y: number; color?: string }[];
+      goals?: { x: number; y: number; side: "left" | "right" | "top" | "bottom" }[];
+      arrows?: { fromX: number; fromY: number; toX: number; toY: number; type?: "run" | "pass" | "dribble" }[];
+      zones?: { x: number; y: number; w: number; h: number; color: string; label?: string }[];
+    }>(),
+    tags: text("tags").array(),
+    sourceCredit: text("source_credit"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    tenantIdx: index("exercises_tenant_idx").on(t.tenantId),
+    categoryIdx: index("exercises_category_idx").on(t.category),
+    ageIdx: index("exercises_age_idx").on(t.ageMin, t.ageMax),
+  })
+);
+
+export const sessionExercises = pgTable(
+  "session_exercises",
+  {
+    sessionId: uuid("session_id")
+      .notNull()
+      .references(() => trainingSessions.id, { onDelete: "cascade" }),
+    exerciseId: uuid("exercise_id")
+      .notNull()
+      .references(() => exercises.id, { onDelete: "cascade" }),
+    orderIdx: integer("order_idx").notNull().default(0),
+    durationOverrideMin: integer("duration_override_min"),
+    notes: text("notes"),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.sessionId, t.exerciseId] }),
+    sessionIdx: index("se_session_idx").on(t.sessionId),
+  })
+);
+
+/* ============================================================================
  * Tipos exportados
  * ========================================================================== */
 
@@ -750,6 +839,10 @@ export type Match = typeof matches.$inferSelect;
 export type NewMatch = typeof matches.$inferInsert;
 export type Injury = typeof injuries.$inferSelect;
 export type NewInjury = typeof injuries.$inferInsert;
+export type Exercise = typeof exercises.$inferSelect;
+export type NewExercise = typeof exercises.$inferInsert;
+export type SessionExercise = typeof sessionExercises.$inferSelect;
+export type NewSessionExercise = typeof sessionExercises.$inferInsert;
 
 /* ============================================================================
  * SQL helpers (para uso futuro em RLS, search, etc)
